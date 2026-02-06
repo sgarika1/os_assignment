@@ -1,24 +1,42 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 public class DateClient {
     public static void main(String[] args) {
-        try {
+
+        // Use try-with-resources to auto-close everything
+        try (
             Socket sock = new Socket("172.16.42.102", 6013);
+            PrintWriter out = new PrintWriter(sock.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            Scanner scanner = new Scanner(System.in)
+        ) {
+            System.out.println("Connected to server.");
+            System.out.println("Type messages to send to the server. Type 'exit' to quit.");
 
-            BufferedReader bin =
-                    new BufferedReader(
-                            new InputStreamReader(sock.getInputStream())
-                    );
+            String response; // declare once
+            while (true) {
+                System.out.print("You: ");
+                String message = scanner.nextLine();
 
-            String response;
-            while ((response = bin.readLine()) != null) {
-                System.out.println(response);
+                if (message.equalsIgnoreCase("exit")) {
+                    break; // exit the loop
+                }
+
+                out.println(message); // send message
+
+                // Optional: read server response
+                response = in.readLine();
+                if (response != null) {
+                    System.out.println("Server: " + response);
+                }
             }
 
-            sock.close();
+            System.out.println("Disconnected from server.");
+
         } catch (IOException e) {
-            System.err.println(e);
-        }
+            System.err.println("Connection error: " + e);
+        } // try-with-resources automatically closes streams and socket
     }
 }
