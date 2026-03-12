@@ -2,56 +2,69 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class DateClientModified {
+public class MessengerClient {
 
-    private static final String HOST = "172.16.58.53"; // change if needed
-    private static final int SERVER_PORT = 6013;
+    private static final String SERVER_IP = "172.16.42.102"; // Server IP
+    private static final int SERVER_PORT = 6013;              // Server Port
 
     public static void main(String[] args) {
 
         try (
-            Socket clientSocket = new Socket(HOST, SERVER_PORT);
-            BufferedReader serverInput =
-                    new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            BufferedWriter serverOutput =
-                    new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-            Scanner userInput = new Scanner(System.in)
+                Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+                BufferedReader serverInput =
+                        new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedWriter serverOutput =
+                        new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                Scanner userInput = new Scanner(System.in)
         ) {
 
-            System.out.println("Connected to server...");
+            System.out.println("Connected to Messenger Server");
 
             // Thread to receive messages from server
             Thread receiveThread = new Thread(() -> {
+
                 try {
-                    String response;
-                    while ((response = serverInput.readLine()) != null) {
-                        System.out.println(response);
+
+                    String message;
+
+                    while ((message = serverInput.readLine()) != null) {
+                        System.out.println(message);
                     }
+
                 } catch (IOException e) {
+
                     System.out.println("Server connection closed.");
+
                 }
+
             });
 
-            receiveThread.setDaemon(true);
             receiveThread.start();
 
             // Sending messages to server
-            boolean running = true;
-            while (running) {
+            while (true) {
+
+                System.out.println("\nCommands:");
+                System.out.println("LIST - Get client list");
+                System.out.println("BROADCAST <message>");
+                System.out.println("MSG <clientName> <message>");
+                System.out.println("EXIT - Quit");
+
                 String message = userInput.nextLine();
 
                 serverOutput.write(message);
                 serverOutput.newLine();
                 serverOutput.flush();
 
-                if (message.equalsIgnoreCase("exit") ||
-                    message.equalsIgnoreCase("bye")) {
-                    running = false;
+                if (message.equalsIgnoreCase("EXIT")) {
+                    break;
                 }
             }
 
-        } catch (IOException ex) {
-            System.out.println("Unable to connect: " + ex.getMessage());
+        } catch (IOException e) {
+
+            System.out.println("Unable to connect to server: " + e.getMessage());
+
         }
     }
 }
